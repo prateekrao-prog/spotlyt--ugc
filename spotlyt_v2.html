@@ -1,0 +1,1465 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Spotlyt — Launch UGC Campaigns in 10 Minutes</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&display=swap" rel="stylesheet">
+<style>
+/* ─── TOKENS ─── */
+:root {
+  --ink:#0A0A0F; --ink-2:#18181F; --ink-3:#2E2E3A;
+  --muted:#6B6B80; --border:#E4E4EC; --surface:#F6F6FB; --surface-2:#EEEEF6; --white:#FFFFFF;
+  --fire:#FF4D2E; --fire-soft:#FFF1EE; --fire-mid:#FFCDC5;
+  --sage:#00B87A; --sage-soft:#E5F8F1; --sage-dark:#006644;
+  --gold:#E8A020; --gold-soft:#FEF6E7;
+  --sky:#2563EB; --sky-soft:#EFF4FF;
+  --purple:#7C3AED; --purple-soft:#F5F3FF;
+  --r:12px; --r-sm:8px; --r-lg:20px; --r-xl:28px;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{font-family:'DM Sans',sans-serif;background:var(--white);color:var(--ink);line-height:1.6;-webkit-font-smoothing:antialiased}
+
+/* ─── SCREEN SYSTEM ─── */
+.screen{display:none;min-height:100vh;flex-direction:column}
+.screen.active{display:flex;animation:appear .3s ease}
+@keyframes appear{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+
+/* ─── TOPBAR ─── */
+.topbar{height:60px;background:var(--white);border-bottom:1px solid var(--border);padding:0 32px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:300;gap:20px;flex-shrink:0}
+.logo{font-family:'Syne',sans-serif;font-size:19px;font-weight:800;color:var(--fire);letter-spacing:-.3px;display:flex;align-items:center;gap:6px;flex-shrink:0;cursor:pointer}
+.t-nav{display:flex;gap:24px}
+.t-nav a{font-size:13px;font-weight:600;color:var(--muted);text-decoration:none;cursor:pointer;transition:color .2s}
+.t-nav a:hover,.t-nav a.on{color:var(--ink)}
+.u-chip{display:flex;align-items:center;gap:8px;background:var(--surface);border-radius:24px;padding:5px 14px 5px 5px;font-size:12px;font-weight:700;color:var(--ink-3);cursor:pointer;flex-shrink:0}
+.u-av{width:28px;height:28px;border-radius:50%;background:var(--fire);color:white;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:11px;flex-shrink:0}
+
+/* ─── STEPPER ─── */
+.stepper{display:flex;align-items:center;flex:1;margin:0 24px;padding-top:10px}
+.s-dot{width:26px;height:26px;border-radius:50%;border:2px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:800;color:var(--muted);background:var(--white);flex-shrink:0;transition:all .35s;position:relative}
+.s-dot .s-lbl{position:absolute;top:32px;left:50%;transform:translateX(-50%);font-size:9px;font-weight:700;color:var(--muted);white-space:nowrap;letter-spacing:.03em;pointer-events:none}
+.s-dot.done{background:var(--sage);border-color:var(--sage);color:white}
+.s-dot.done .s-lbl{color:var(--sage-dark)}
+.s-dot.curr{border-color:var(--fire);color:var(--fire);background:var(--fire-soft)}
+.s-dot.curr .s-lbl{color:var(--fire);font-weight:800}
+.s-line{flex:1;height:2px;background:var(--border);transition:background .4s;min-width:8px}
+.s-line.done{background:var(--sage)}
+
+/* ─── LAYOUT ─── */
+.layout{display:flex;flex:1}
+.sidebar{width:218px;background:var(--white);border-right:1px solid var(--border);padding:24px 14px;display:flex;flex-direction:column;gap:3px;position:sticky;top:60px;height:calc(100vh - 60px);overflow-y:auto;flex-shrink:0}
+.sb-brand{padding:4px 10px 14px}
+.sb-brand-name{font-family:'Syne',sans-serif;font-size:13px;font-weight:700;color:var(--ink)}
+.sb-brand-sub{font-size:11px;color:var(--muted);font-weight:500;margin-top:1px}
+.sb-new{display:flex;align-items:center;justify-content:center;gap:8px;padding:11px;border-radius:var(--r-sm);background:var(--fire);color:white;font-size:13px;font-weight:800;cursor:pointer;margin-bottom:10px;transition:all .2s;font-family:'Syne',sans-serif;letter-spacing:.02em}
+.sb-new:hover{transform:translateY(-1px);box-shadow:0 6px 18px rgba(255,77,46,.32)}
+.sb-sec{font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:var(--muted);padding:14px 10px 5px}
+.sb-item{display:flex;align-items:center;gap:9px;padding:9px 10px;border-radius:var(--r-sm);font-size:13px;font-weight:600;color:var(--ink-3);cursor:pointer;transition:all .2s}
+.sb-item:hover{background:var(--surface);color:var(--ink)}
+.sb-item.on{background:var(--fire-soft);color:var(--fire);font-weight:700}
+.sb-icon{width:18px;text-align:center;font-size:14px}
+.main{flex:1;overflow-y:auto}
+
+/* ─── PAGE ─── */
+.page{padding:40px 36px;max-width:1080px}
+
+/* ─── TYPE ─── */
+.h1{font-family:'Syne',sans-serif;font-size:26px;font-weight:700;color:var(--ink);letter-spacing:-.4px;margin-bottom:6px}
+.h2{font-family:'Syne',sans-serif;font-size:19px;font-weight:700;color:var(--ink);letter-spacing:-.2px;margin-bottom:14px}
+.sub{font-size:14px;color:var(--muted);font-weight:500}
+
+/* ─── BUTTONS ─── */
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:11px 22px;border-radius:var(--r-sm);font-size:13px;font-weight:700;font-family:inherit;cursor:pointer;border:none;transition:all .2s;letter-spacing:.02em}
+.btn-fire{background:var(--fire);color:white}
+.btn-fire:hover{transform:translateY(-2px);box-shadow:0 8px 22px rgba(255,77,46,.35)}
+.btn-ghost{background:transparent;color:var(--ink-3);border:1.5px solid var(--border)}
+.btn-ghost:hover{background:var(--surface);border-color:var(--ink-3)}
+.btn-sage{background:var(--sage);color:white}
+.btn-sage:hover{transform:translateY(-2px);box-shadow:0 8px 22px rgba(0,184,122,.3)}
+.btn-purple{background:var(--purple);color:white}
+.btn-purple:hover{transform:translateY(-2px);box-shadow:0 8px 22px rgba(124,58,237,.35)}
+.btn-lg{padding:14px 32px;font-size:15px}
+.btn-sm{padding:7px 14px;font-size:11px}
+.btn-w{width:100%}
+
+/* ─── FORMS ─── */
+.fg{margin-bottom:20px}
+.fg-row{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.fg-row-3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px}
+.fl{font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.09em;color:var(--muted);display:block;margin-bottom:7px}
+.req{color:var(--fire);margin-left:2px}
+.fi,.fs,.ft{width:100%;padding:12px 14px;border:1.5px solid var(--border);border-radius:var(--r-sm);font-size:14px;font-family:inherit;color:var(--ink);outline:none;transition:border .2s,box-shadow .2s;background:var(--white);font-weight:500}
+.fi:focus,.fs:focus,.ft:focus{border-color:var(--fire);box-shadow:0 0 0 3px rgba(255,77,46,.1)}
+.ft{min-height:76px;resize:vertical}
+.fh{font-size:11px;color:var(--muted);margin-top:5px;line-height:1.5}
+
+/* ─── CHIP SELECTOR ─── */
+.chip-group{display:flex;flex-wrap:wrap;gap:8px;margin-top:6px}
+.chip{padding:7px 14px;border-radius:20px;border:1.5px solid var(--border);font-size:12px;font-weight:700;color:var(--muted);cursor:pointer;transition:all .2s;background:var(--white)}
+.chip:hover{border-color:var(--fire);color:var(--fire);background:var(--fire-soft)}
+.chip.sel{border-color:var(--fire);color:var(--fire);background:var(--fire-soft)}
+
+/* ─── CARDS ─── */
+.card{background:var(--white);border:1.5px solid var(--border);border-radius:var(--r);padding:22px}
+.card-fire{border-color:var(--fire);border-width:2px}
+.card-sage{border-color:var(--sage)}
+.card-surface{background:var(--surface)}
+.card-title{font-family:'Syne',sans-serif;font-size:14px;font-weight:700;color:var(--ink);margin-bottom:14px;letter-spacing:-.1px}
+.kv{display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid var(--border);font-size:13px}
+.kv:last-child{border-bottom:none}
+.kk{color:var(--muted);font-weight:600}
+.kv_{font-weight:700;color:var(--ink)}
+
+/* ─── GRID ─── */
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.g3{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+.g4{display:grid;grid-template-columns:repeat(4,1fr);gap:14px}
+@media(max-width:860px){.g2,.g3,.g4,.fg-row,.fg-row-3{grid-template-columns:1fr}}
+
+/* ─── TAGS ─── */
+.tag{display:inline-flex;align-items:center;padding:3px 9px;border-radius:20px;font-size:10px;font-weight:800;margin:2px;letter-spacing:.02em}
+.tg-fire{background:var(--fire-soft);color:var(--fire)}
+.tg-gray{background:var(--surface-2);color:var(--ink-3)}
+.tg-sage{background:var(--sage-soft);color:var(--sage-dark)}
+.tg-gold{background:var(--gold-soft);color:var(--gold)}
+.tg-sky{background:var(--sky-soft);color:var(--sky)}
+.tg-purple{background:var(--purple-soft);color:var(--purple)}
+
+/* ─── METRIC CARDS ─── */
+.mc{background:var(--white);border:1.5px solid var(--border);border-radius:var(--r);padding:20px;position:relative;overflow:hidden}
+.mc::after{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:var(--fire)}
+.mc.g::after{background:var(--sage)}
+.mc.b::after{background:var(--sky)}
+.mc.a::after{background:var(--gold)}
+.mc.p::after{background:var(--purple)}
+.mc-val{font-family:'Syne',sans-serif;font-size:26px;font-weight:700;color:var(--ink);letter-spacing:-.5px;margin-bottom:4px;line-height:1}
+.mc-lbl{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--muted)}
+.mc-d{font-size:11px;font-weight:700;margin-top:6px}
+.up{color:var(--sage)}.dn{color:var(--gold)}
+
+/* ─── CREATOR CARDS ─── */
+.cc{background:var(--white);border:1.5px solid var(--border);border-radius:var(--r);padding:16px;cursor:pointer;transition:all .25s}
+.cc:hover{border-color:var(--fire);transform:translateY(-2px);box-shadow:0 6px 20px rgba(0,0,0,.07)}
+.cc.sel{border-color:var(--fire);border-width:2px;background:var(--fire-soft)}
+.cc-match{display:inline-flex;font-size:10px;font-weight:800;padding:3px 8px;border-radius:16px;margin-bottom:10px}
+.cc-match.hi{background:var(--fire-soft);color:var(--fire)}
+.cc-match.med{background:var(--surface-2);color:var(--muted)}
+.cc-av{width:44px;height:44px;border-radius:50%;margin:0 auto 8px;display:flex;align-items:center;justify-content:center;font-size:20px}
+.cc-name{font-family:'Syne',sans-serif;font-size:13px;font-weight:700;text-align:center;color:var(--ink);margin-bottom:2px}
+.cc-handle{font-size:11px;color:var(--muted);text-align:center;margin-bottom:10px;font-weight:500}
+.cc-stats{display:grid;grid-template-columns:1fr 1fr;gap:5px;margin-bottom:10px}
+.cs{background:var(--surface);border-radius:var(--r-sm);padding:5px;text-align:center}
+.cs-v{font-family:'Syne',sans-serif;font-size:12px;font-weight:700;color:var(--ink)}
+.cs-l{font-size:8px;color:var(--muted);font-weight:700;text-transform:uppercase;letter-spacing:.04em}
+.cc-price{font-family:'Syne',sans-serif;font-size:13px;font-weight:700;color:var(--fire);text-align:center;padding-top:9px;border-top:1px solid var(--border)}
+
+/* ─── REVIEW BLOCKS ─── */
+.rv-block{border:1.5px solid var(--border);border-radius:var(--r);overflow:hidden;margin-bottom:14px}
+.rv-head{background:var(--surface);padding:11px 18px;display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid var(--border)}
+.rv-head-title{font-family:'Syne',sans-serif;font-size:13px;font-weight:700;color:var(--ink)}
+.rv-body{padding:14px 18px}
+
+/* ─── CAMPAIGN CARDS ─── */
+.cmpcard{background:var(--white);border:1.5px solid var(--border);border-radius:var(--r);padding:20px}
+.cmp-status{display:inline-flex;align-items:center;gap:5px;font-size:10px;font-weight:800;padding:3px 9px;border-radius:10px;margin-bottom:10px;letter-spacing:.04em}
+.st-live{background:var(--sage-soft);color:var(--sage-dark)}
+.st-draft{background:var(--surface-2);color:var(--muted)}
+.cmp-name{font-family:'Syne',sans-serif;font-size:14px;font-weight:700;color:var(--ink);margin-bottom:3px;letter-spacing:-.1px}
+.cmp-meta{font-size:12px;color:var(--muted);font-weight:500;margin-bottom:12px}
+.pb{width:100%;height:4px;background:var(--surface-2);border-radius:2px;overflow:hidden;margin-bottom:8px}
+.pf{height:100%;border-radius:2px;background:var(--fire);transition:width .5s}
+
+/* ─── PERF ROWS ─── */
+.cp-row{display:flex;align-items:center;gap:12px;margin-bottom:14px}
+.cp-info{flex:1}
+.cp-name{font-size:13px;font-weight:700;color:var(--ink)}
+.cp-meta{font-size:11px;color:var(--muted);font-weight:500}
+.cp-bar-w{width:100%;height:4px;background:var(--surface-2);border-radius:2px;overflow:hidden;margin-top:5px}
+.cp-bar{height:100%;border-radius:2px}
+
+/* ─── FUNNEL ─── */
+.fn-row{margin-bottom:10px}
+.fn-lbl{display:flex;justify-content:space-between;font-size:11px;color:var(--muted);font-weight:700;margin-bottom:4px}
+.fn-bar{height:15px;border-radius:3px;display:flex;align-items:center;padding-left:8px;color:white;font-size:10px;font-weight:700}
+
+/* ─── NEXT REC ─── */
+.next-rec{background:linear-gradient(140deg,var(--ink) 0%,var(--ink-2) 100%);border-radius:var(--r);padding:22px;color:white}
+.nr-title{font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.1em;color:var(--fire);margin-bottom:10px}
+.nr-item{font-size:12px;font-weight:600;margin-bottom:5px;display:flex;gap:8px;opacity:.9}
+.nr-hl{font-size:11px;color:#9FEFD3;font-weight:700;margin:10px 0 14px;line-height:1.5}
+
+/* ─── ALERT BOX ─── */
+.alert-box{background:var(--gold-soft);border:1.5px solid #F5D28A;border-radius:var(--r);padding:16px;margin-bottom:18px}
+.alert-title{font-size:13px;font-weight:800;color:var(--gold);margin-bottom:5px}
+.alert-body{font-size:12px;color:#6B4800;font-weight:600;line-height:1.6;margin-bottom:12px}
+
+/* ─── AI OVERLAY ─── */
+.ai-ov{position:fixed;inset:0;background:rgba(10,10,15,.72);backdrop-filter:blur(6px);z-index:800;display:none;align-items:center;justify-content:center}
+.ai-ov.on{display:flex;animation:appear .2s ease}
+.ai-box{background:var(--white);border-radius:var(--r-xl);padding:44px 48px;text-align:center;max-width:380px;width:90%}
+.ai-dots{display:flex;gap:8px;justify-content:center;margin-bottom:18px}
+.ai-d{width:9px;height:9px;border-radius:50%;background:var(--fire);animation:bounce-d 1.2s infinite}
+.ai-d:nth-child(2){animation-delay:.2s}
+.ai-d:nth-child(3){animation-delay:.4s}
+@keyframes bounce-d{0%,80%,100%{transform:scale(0);opacity:.3}40%{transform:scale(1);opacity:1}}
+.ai-title{font-family:'Syne',sans-serif;font-size:17px;font-weight:700;color:var(--ink);margin-bottom:6px}
+.ai-msg{font-size:12px;color:var(--muted);font-weight:500;margin-bottom:20px}
+.ai-prog{display:flex;flex-direction:column;gap:7px;text-align:left}
+.ai-pr{display:flex;align-items:center;gap:10px;font-size:12px;font-weight:600;color:var(--muted);padding:7px 10px;border-radius:var(--r-sm);background:var(--surface)}
+.ai-pr.running{color:var(--fire);background:var(--fire-soft)}
+.ai-pr.done{color:var(--sage-dark);background:var(--sage-soft)}
+.ai-pr-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0;background:var(--border)}
+.ai-pr.running .ai-pr-dot{background:var(--fire);animation:bounce-d .8s infinite}
+.ai-pr.done .ai-pr-dot{background:var(--sage)}
+
+/* ─── SSO MODAL ─── */
+.modal-ov{position:fixed;inset:0;background:rgba(10,10,15,.6);backdrop-filter:blur(5px);display:none;align-items:center;justify-content:center;z-index:900}
+.modal-ov.on{display:flex;animation:appear .25s ease}
+.modal-box{background:var(--white);border-radius:var(--r-xl);padding:44px;max-width:390px;width:calc(100% - 40px);box-shadow:0 24px 60px rgba(0,0,0,.18);position:relative;animation:appear .3s ease}
+.modal-close{position:absolute;top:16px;right:16px;background:var(--surface-2);border:none;width:28px;height:28px;border-radius:50%;font-size:13px;cursor:pointer;color:var(--muted);display:flex;align-items:center;justify-content:center}
+.modal-close:hover{background:var(--border)}
+.auth-btn{display:flex;align-items:center;justify-content:center;gap:10px;width:100%;padding:13px;border-radius:var(--r-sm);font-size:13px;font-weight:700;cursor:pointer;border:1.5px solid var(--border);background:var(--white);color:var(--ink);font-family:inherit;transition:all .2s;margin-bottom:10px}
+.auth-btn:hover{border-color:var(--fire);background:var(--fire-soft);color:var(--fire)}
+
+/* ─── MISC ─── */
+.divider{height:1px;background:var(--border);margin:18px 0}
+.back{display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:700;color:var(--muted);cursor:pointer;margin-bottom:22px;transition:color .2s}
+.back:hover{color:var(--ink)}
+.why{background:var(--surface);border-radius:var(--r-sm);padding:14px;margin-top:12px}
+.why-lbl{font-size:9px;font-weight:800;text-transform:uppercase;letter-spacing:.1em;color:var(--fire);margin-bottom:6px}
+.why-txt{font-size:12px;color:var(--ink-3);line-height:1.7;font-weight:500}
+.wstep{display:none}
+.wstep.on{display:block;animation:appear .3s ease}
+.info-banner{background:var(--sky-soft);border:1px solid #BFD4F7;border-radius:var(--r-sm);padding:13px 16px;margin-bottom:22px}
+
+/* ─── ONBOARDING ─── */
+.ob-progress{display:flex;gap:4px;margin-bottom:32px}
+.ob-seg{height:4px;border-radius:2px;flex:1;background:var(--border);transition:background .3s}
+.ob-seg.done{background:var(--fire)}
+.ob-section{margin-bottom:28px}
+.ob-section-title{font-family:'Syne',sans-serif;font-size:13px;font-weight:700;color:var(--ink);margin-bottom:14px;display:flex;align-items:center;gap:8px}
+.ob-section-icon{font-size:16px}
+.platform-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:6px}
+.plat-card{border:1.5px solid var(--border);border-radius:var(--r-sm);padding:12px 10px;text-align:center;cursor:pointer;transition:all .2s}
+.plat-card:hover{border-color:var(--fire);background:var(--fire-soft)}
+.plat-card.sel{border-color:var(--fire);background:var(--fire-soft)}
+.plat-card-icon{font-size:22px;margin-bottom:4px}
+.plat-card-name{font-size:10px;font-weight:700;color:var(--ink-3)}
+.budget-rail{display:flex;gap:8px;flex-wrap:wrap;margin-top:6px}
+.budget-pill{padding:8px 16px;border-radius:20px;border:1.5px solid var(--border);font-size:12px;font-weight:700;color:var(--muted);cursor:pointer;transition:all .2s}
+.budget-pill:hover,.budget-pill.sel{border-color:var(--fire);color:var(--fire);background:var(--fire-soft)}
+
+/* ─── LANDING ─── */
+#screen-land{background:var(--white)}
+.land-hero{background:var(--ink);min-height:100vh;display:flex;align-items:center;padding:80px 48px;position:relative;overflow:hidden}
+.land-hero::before{content:'';position:absolute;top:-180px;right:-180px;width:560px;height:560px;border-radius:50%;background:radial-gradient(circle,rgba(255,77,46,.14) 0%,transparent 70%);pointer-events:none}
+.land-hero::after{content:'';position:absolute;bottom:-100px;left:-60px;width:400px;height:400px;border-radius:50%;background:radial-gradient(circle,rgba(0,184,122,.08) 0%,transparent 70%);pointer-events:none}
+.lh-inner{max-width:1080px;margin:0 auto;width:100%;display:grid;grid-template-columns:1fr 1fr;gap:80px;align-items:center;position:relative;z-index:1}
+.hero-pill{display:inline-flex;align-items:center;gap:6px;background:rgba(255,77,46,.12);border:1px solid rgba(255,77,46,.25);color:rgba(255,255,255,.8);font-size:11px;font-weight:700;padding:5px 12px;border-radius:20px;letter-spacing:.07em;text-transform:uppercase;margin-bottom:20px}
+.hero-h1{font-family:'Syne',sans-serif;font-size:50px;font-weight:800;color:white;line-height:1.05;letter-spacing:-1.5px;margin-bottom:16px}
+.hero-h1 em{font-style:normal;color:var(--fire)}
+.hero-p{font-size:15px;color:rgba(255,255,255,.55);margin-bottom:32px;font-weight:500;line-height:1.7;max-width:420px}
+.hero-btns{display:flex;gap:12px;flex-wrap:wrap}
+.hero-mock{background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.1);border-radius:20px;padding:24px;backdrop-filter:blur(20px)}
+.hm-bar{background:rgba(255,255,255,.06);border-radius:8px;padding:7px 11px;display:flex;align-items:center;gap:7px;margin-bottom:14px}
+.hm-d{width:6px;height:6px;border-radius:50%;flex-shrink:0}
+.hm-logo{font-family:'Syne',sans-serif;font-size:11px;color:var(--fire);font-weight:800;margin-left:4px}
+.hm-card{background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.09);border-radius:12px;padding:13px;margin-bottom:10px}
+.hm-label{font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.09em;color:rgba(255,255,255,.35);margin-bottom:6px}
+.hm-tag{display:inline-flex;background:rgba(255,77,46,.18);color:rgba(255,255,255,.8);font-size:9px;font-weight:700;padding:2px 7px;border-radius:7px;margin:2px}
+.hm-met{text-align:center}
+.hm-v{font-family:'Syne',sans-serif;font-size:17px;font-weight:700;color:white}
+.hm-l{font-size:9px;color:rgba(255,255,255,.35);font-weight:600;text-transform:uppercase}
+.land-sec{padding:88px 48px}
+.land-sec.bg{background:var(--surface)}
+.feat-grid{max-width:1080px;margin:0 auto;display:grid;grid-template-columns:repeat(3,1fr);gap:20px}
+.feat-card{padding:26px;border-radius:var(--r-lg);background:var(--white);border:1.5px solid var(--border);transition:all .25s}
+.feat-card:hover{border-color:var(--fire-mid);background:var(--fire-soft);transform:translateY(-2px)}
+.feat-icon{font-size:24px;margin-bottom:12px}
+.feat-name{font-family:'Syne',sans-serif;font-size:15px;font-weight:700;color:var(--ink);margin-bottom:7px}
+.feat-desc{font-size:12px;color:var(--muted);font-weight:500;line-height:1.65}
+.sgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;max-width:420px;margin:0 auto 36px}
+.scard{background:var(--white);border-radius:var(--r);padding:20px;border:1.5px solid var(--border);text-align:center}
+.sv{font-family:'Syne',sans-serif;font-size:28px;font-weight:800;color:var(--fire);letter-spacing:-.5px;margin-bottom:4px}
+.sl{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--muted)}
+
+@media(max-width:768px){
+  .land-hero,.land-sec{padding:60px 24px}
+  .hero-h1{font-size:32px}
+  .lh-inner,.feat-grid,.sgrid{grid-template-columns:1fr}
+  .topbar{padding:0 18px}
+  .page{padding:28px 18px}
+  .sidebar{display:none}
+  .stepper{margin:0 6px}
+  .s-dot .s-lbl{display:none}
+}
+</style>
+</head>
+<body>
+
+<!-- ══ AI OVERLAY ══ -->
+<div class="ai-ov" id="ai-ov">
+  <div class="ai-box">
+    <div class="ai-dots"><div class="ai-d"></div><div class="ai-d"></div><div class="ai-d"></div></div>
+    <div class="ai-title" id="ai-title">Running AI agents</div>
+    <div class="ai-msg" id="ai-msg">Initialising pipeline…</div>
+    <div class="ai-prog" id="ai-prog">
+      <div class="ai-pr" id="ap1"><span class="ai-pr-dot"></span>Persona Builder — reading brand signals</div>
+      <div class="ai-pr" id="ap2"><span class="ai-pr-dot"></span>Analyst — fetching category benchmarks</div>
+      <div class="ai-pr" id="ap3"><span class="ai-pr-dot"></span>Campaign Planner — designing strategy</div>
+      <div class="ai-pr" id="ap4"><span class="ai-pr-dot"></span>Sales Agent — calculating packages</div>
+      <div class="ai-pr" id="ap5"><span class="ai-pr-dot"></span>Creative Manager — writing UGC brief</div>
+    </div>
+  </div>
+</div>
+
+<!-- ══ SSO MODAL ══ -->
+<div class="modal-ov" id="sso-modal">
+  <div class="modal-box">
+    <button class="modal-close" onclick="closeSSO()">✕</button>
+    <div style="font-family:'Syne',sans-serif;font-size:21px;font-weight:800;text-align:center;margin-bottom:5px;letter-spacing:-.3px">Sign in to Spotlyt</div>
+    <div style="font-size:13px;color:var(--muted);text-align:center;margin-bottom:28px;font-weight:500">Launch your first campaign in minutes</div>
+    <button class="auth-btn" onclick="authWith()">
+      <svg width="17" height="17" viewBox="0 0 18 18"><path fill="#4285F4" d="M17.64 9.2c0-.637-.057-1.251-.164-1.84H9v3.481h4.844c-.209 1.125-.843 2.078-1.796 2.717v2.258h2.908c1.702-1.567 2.684-3.875 2.684-6.615z"/><path fill="#34A853" d="M9 18c2.43 0 4.467-.806 5.956-2.18l-2.908-2.259c-.806.54-1.837.86-3.048.86-2.344 0-4.328-1.584-5.036-3.711H.957v2.332A8.997 8.997 0 0 0 9 18z"/><path fill="#FBBC05" d="M3.964 10.71A5.41 5.41 0 0 1 3.682 9c0-.593.102-1.17.282-1.71V4.958H.957A8.996 8.996 0 0 0 0 9c0 1.452.348 2.827.957 4.042l3.007-2.332z"/><path fill="#EA4335" d="M9 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.463.891 11.426 0 9 0A8.997 8.997 0 0 0 .957 4.958L3.964 7.29C4.672 5.163 6.656 3.58 9 3.58z"/></svg>
+      Continue with Google
+    </button>
+    <button class="auth-btn" onclick="authWith()"><span>🏢</span> Continue with Workspace</button>
+    <button class="auth-btn" onclick="authWith()"><span>✉️</span> Sign up with Email</button>
+    <p style="text-align:center;font-size:11px;color:var(--muted);margin-top:14px;font-weight:600">Already have an account? <span style="color:var(--fire);cursor:pointer;font-weight:800" onclick="authWith()">Log in →</span></p>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════ -->
+<!--  SCREEN 0 — LANDING                                   -->
+<!-- ══════════════════════════════════════════════════════ -->
+<div id="screen-land" class="screen active">
+  <div class="land-hero">
+    <div class="lh-inner">
+      <div>
+        <div class="hero-pill">✦ AI-Native UGC Platform</div>
+        <h1 class="hero-h1">Launch UGC<br>campaigns in<br><em>10 minutes.</em></h1>
+        <p class="hero-p">Enter your handle, goal, and budget. Six AI agents run at once. Strategy, brief, and vetted creators — ready to activate.</p>
+        <div class="hero-btns">
+          <button class="btn btn-fire btn-lg" onclick="openSSO()">Get Started Free →</button>
+          <button class="btn btn-ghost btn-lg" style="color:rgba(255,255,255,.6);border-color:rgba(255,255,255,.18)" onclick="openSSO()">See Demo</button>
+        </div>
+      </div>
+      <div class="hero-mock">
+        <div class="hm-bar">
+          <div class="hm-d" style="background:#FF5F57"></div>
+          <div class="hm-d" style="background:#FFBD2E"></div>
+          <div class="hm-d" style="background:#28CA41"></div>
+          <div class="hm-logo">Spotlyt ◆</div>
+        </div>
+        <div class="hm-card">
+          <div class="hm-label">Onboarding — brand profile</div>
+          <div style="font-size:11px;color:rgba(255,255,255,.5);margin-top:4px">Industry · Audience · Platforms · Budget</div>
+          <div style="margin-top:8px;height:8px;background:rgba(255,77,46,.4);border-radius:4px;width:78%"></div>
+        </div>
+        <div class="hm-card">
+          <div class="hm-label">Step 2 — AI output (all at once)</div>
+          <div style="margin-top:2px"><span class="hm-tag">Persona</span><span class="hm-tag">Strategy</span><span class="hm-tag">UGC Brief</span></div>
+        </div>
+        <div class="hm-card">
+          <div class="hm-label">Predicted performance</div>
+          <div style="display:flex;gap:14px;margin-top:4px">
+            <div class="hm-met"><div class="hm-v">2.1L</div><div class="hm-l">Reach</div></div>
+            <div class="hm-met"><div class="hm-v">₹155</div><div class="hm-l">CPM</div></div>
+            <div class="hm-met"><div class="hm-v">3.4×</div><div class="hm-l">ROAS</div></div>
+          </div>
+        </div>
+        <div style="display:flex;gap:6px;margin-top:4px">
+          <div style="flex:1;height:26px;border-radius:7px;background:rgba(255,77,46,.75);display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:800;color:white">Review</div>
+          <div style="flex:1;height:26px;border-radius:7px;background:rgba(0,184,122,.6);display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:800;color:white">Creators</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="land-sec">
+    <div style="max-width:1080px;margin:0 auto">
+      <div style="text-align:center;margin-bottom:48px">
+        <h2 style="font-family:'Syne',sans-serif;font-size:32px;font-weight:800;color:var(--ink);letter-spacing:-.8px;margin-bottom:10px">One intake. Everything ready.</h2>
+        <p style="font-size:14px;color:var(--muted);max-width:440px;margin:0 auto;font-weight:500">Handle + goal + budget. Six AI agents run in parallel and deliver the full picture — no back and forth.</p>
+      </div>
+      <div class="feat-grid">
+        <div class="feat-card"><div class="feat-icon">⚡</div><div class="feat-name">All inputs at once</div><div class="feat-desc">Onboard in 2 minutes. Handle, goal, budget — AI does the rest in under 90 seconds.</div></div>
+        <div class="feat-card"><div class="feat-icon">🧠</div><div class="feat-name">Combined AI reveal</div><div class="feat-desc">Persona, strategy, and UGC brief shown together in Step 2. Edit any panel, then approve all.</div></div>
+        <div class="feat-card"><div class="feat-icon">📊</div><div class="feat-name">Benchmark-backed</div><div class="feat-desc">Every CPM, reach, and ER estimate grounded in live category benchmarks — not guesswork.</div></div>
+        <div class="feat-card"><div class="feat-icon">⭐</div><div class="feat-name">Vetted UGC creators</div><div class="feat-desc">Ranked by match score, authenticity %, and UGC campaign history. Swap any from backup list.</div></div>
+        <div class="feat-card"><div class="feat-icon">📡</div><div class="feat-name">Live dashboard + alerts</div><div class="feat-desc">Real-time metrics, optimisation alerts, and one-click approve for creator reposts.</div></div>
+        <div class="feat-card"><div class="feat-icon">📈</div><div class="feat-name">Auto final report</div><div class="feat-desc">Auto-generated report with next campaign recommendation and creator scorecards.</div></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="land-sec bg">
+    <div style="max-width:1080px;margin:0 auto;text-align:center">
+      <h2 style="font-family:'Syne',sans-serif;font-size:30px;font-weight:800;color:var(--ink);letter-spacing:-.7px;margin-bottom:10px">Built for founders who've tried everything else.</h2>
+      <p style="font-size:14px;color:var(--muted);margin-bottom:40px;font-weight:500">200+ brands. Average 2.8× ROI. 10-minute setup.</p>
+      <div class="sgrid">
+        <div class="scard"><div class="sv">200+</div><div class="sl">Brands Launched</div></div>
+        <div class="scard"><div class="sv">2.8×</div><div class="sl">Avg ROI</div></div>
+        <div class="scard"><div class="sv">10 min</div><div class="sl">Avg Setup</div></div>
+      </div>
+      <button class="btn btn-fire btn-lg" onclick="openSSO()">Launch My Campaign →</button>
+    </div>
+  </div>
+
+  <div class="land-sec" style="background:var(--ink);text-align:center">
+    <div style="max-width:500px;margin:0 auto">
+      <h2 style="font-family:'Syne',sans-serif;font-size:34px;font-weight:800;color:white;letter-spacing:-.8px;margin-bottom:10px">Stop guessing.<br>Start launching.</h2>
+      <p style="font-size:14px;color:rgba(255,255,255,.45);margin-bottom:28px;font-weight:500">One handle. One goal. One budget. Full campaign ready.</p>
+      <button class="btn btn-fire btn-lg" onclick="openSSO()">Get Started Free →</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════ -->
+<!--  SCREEN 1 — ONBOARDING                                -->
+<!-- ══════════════════════════════════════════════════════ -->
+<div id="screen-onboard" class="screen">
+  <div class="topbar">
+    <div class="logo"><span>◆</span> Spotlyt</div>
+    <div style="flex:1;text-align:center">
+      <div style="font-size:12px;font-weight:700;color:var(--muted)">Let's set up your brand profile</div>
+    </div>
+    <div class="u-chip"><div class="u-av" id="ob-av">?</div><span id="ob-name">Account</span></div>
+  </div>
+  <div class="main">
+    <div class="page" style="max-width:680px;margin:0 auto">
+      <div style="margin-bottom:32px">
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px">
+          <div style="width:36px;height:36px;border-radius:50%;background:var(--purple-soft);display:flex;align-items:center;justify-content:center;font-size:16px">👋</div>
+          <div>
+            <div class="h1" style="margin-bottom:0" id="ob-greeting">Welcome to Spotlyt!</div>
+          </div>
+        </div>
+        <div class="sub">Tell us about your brand so we can personalise your experience. Takes about 2 minutes.</div>
+      </div>
+
+      <div class="ob-progress" id="ob-progress">
+        <div class="ob-seg done" id="obs1"></div>
+        <div class="ob-seg" id="obs2"></div>
+        <div class="ob-seg" id="obs3"></div>
+        <div class="ob-seg" id="obs4"></div>
+      </div>
+      <div style="font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin-bottom:28px" id="ob-step-label">Step 1 of 4 — Brand basics</div>
+
+      <!-- ONBOARD STEP 1 — Brand basics -->
+      <div id="ob-step-1" class="wstep on">
+        <div class="ob-section">
+          <div class="ob-section-title"><span class="ob-section-icon">🏷️</span> Brand basics</div>
+          <div class="fg">
+            <label class="fl">Brand / company name <span class="req">*</span></label>
+            <input class="fi" id="ob-brand" type="text" placeholder="e.g. Natural Glow Studio" />
+            <div class="fh">This will appear on your dashboard and reports.</div>
+          </div>
+          <div class="fg">
+            <label class="fl">Website or domain <span class="req">*</span></label>
+            <input class="fi" id="ob-domain" type="text" placeholder="yourbrand.com or @yourbrand" />
+          </div>
+          <div class="fg" style="margin-bottom:0">
+            <label class="fl">Industry <span class="req">*</span></label>
+            <select class="fs" id="ob-industry">
+              <option value="">Select your industry</option>
+              <option value="beauty">Beauty & Skincare</option>
+              <option value="fashion">Fashion & Apparel</option>
+              <option value="food">Food & Beverage</option>
+              <option value="health">Health & Wellness</option>
+              <option value="fitness">Fitness & Sports</option>
+              <option value="tech">Consumer Tech & Gadgets</option>
+              <option value="home">Home & Living</option>
+              <option value="travel">Travel & Hospitality</option>
+              <option value="finance">Fintech & Finance</option>
+              <option value="education">EdTech & Education</option>
+              <option value="pets">Pets & Animals</option>
+              <option value="other">Other</option>
+            </select>
+          </div>
+        </div>
+        <div style="display:flex;justify-content:flex-end">
+          <button class="btn btn-fire btn-lg" onclick="obNext(1)">Next →</button>
+        </div>
+      </div>
+
+      <!-- ONBOARD STEP 2 — Audience -->
+      <div id="ob-step-2" class="wstep">
+        <div class="ob-section">
+          <div class="ob-section-title"><span class="ob-section-icon">🎯</span> Target audience</div>
+          <div class="fg">
+            <label class="fl">Primary audience <span class="req">*</span></label>
+            <div class="chip-group" id="aud-chips">
+              <div class="chip" onclick="toggleChip(this,'aud')">Women 18–24</div>
+              <div class="chip" onclick="toggleChip(this,'aud')">Women 25–35</div>
+              <div class="chip" onclick="toggleChip(this,'aud')">Women 35–50</div>
+              <div class="chip" onclick="toggleChip(this,'aud')">Men 18–24</div>
+              <div class="chip" onclick="toggleChip(this,'aud')">Men 25–35</div>
+              <div class="chip" onclick="toggleChip(this,'aud')">Men 35–50</div>
+              <div class="chip" onclick="toggleChip(this,'aud')">Gen Z</div>
+              <div class="chip" onclick="toggleChip(this,'aud')">Millennials</div>
+              <div class="chip" onclick="toggleChip(this,'aud')">Parents</div>
+              <div class="chip" onclick="toggleChip(this,'aud')">Professionals</div>
+            </div>
+            <div class="fh">Select all that apply.</div>
+          </div>
+          <div class="fg">
+            <label class="fl">Primary geography</label>
+            <select class="fs" id="ob-geo">
+              <option value="tier1">Metro cities (Mumbai, Delhi, Bangalore, Hyderabad)</option>
+              <option value="tier2">Tier-2 cities (Pune, Jaipur, Lucknow, etc.)</option>
+              <option value="pan">Pan-India</option>
+              <option value="global">Global</option>
+            </select>
+          </div>
+          <div class="fg" style="margin-bottom:0">
+            <label class="fl">Describe your ideal customer</label>
+            <textarea class="ft" id="ob-icp" placeholder="e.g. Urban working women aged 25–32 who care about clean beauty ingredients, shop on Instagram, and are influenced by skincare routines…"></textarea>
+            <div class="fh">Optional but helps personalise AI outputs significantly.</div>
+          </div>
+        </div>
+        <div style="display:flex;justify-content:space-between">
+          <button class="btn btn-ghost" onclick="obPrev(2)">← Back</button>
+          <button class="btn btn-fire btn-lg" onclick="obNext(2)">Next →</button>
+        </div>
+      </div>
+
+      <!-- ONBOARD STEP 3 — Platforms & goals -->
+      <div id="ob-step-3" class="wstep">
+        <div class="ob-section">
+          <div class="ob-section-title"><span class="ob-section-icon">📱</span> Platforms you want to activate</div>
+          <div class="platform-grid" id="plat-grid">
+            <div class="plat-card" onclick="togglePlat(this)">
+              <div class="plat-card-icon">📸</div>
+              <div class="plat-card-name">Instagram</div>
+            </div>
+            <div class="plat-card" onclick="togglePlat(this)">
+              <div class="plat-card-icon">▶️</div>
+              <div class="plat-card-name">YouTube</div>
+            </div>
+            <div class="plat-card" onclick="togglePlat(this)">
+              <div class="plat-card-icon">🎵</div>
+              <div class="plat-card-name">TikTok</div>
+            </div>
+            <div class="plat-card" onclick="togglePlat(this)">
+              <div class="plat-card-icon">𝕏</div>
+              <div class="plat-card-name">X / Twitter</div>
+            </div>
+            <div class="plat-card" onclick="togglePlat(this)">
+              <div class="plat-card-icon">💼</div>
+              <div class="plat-card-name">LinkedIn</div>
+            </div>
+            <div class="plat-card" onclick="togglePlat(this)">
+              <div class="plat-card-icon">📌</div>
+              <div class="plat-card-name">Pinterest</div>
+            </div>
+          </div>
+          <div class="fh" style="margin-top:10px">Select all platforms you'd like creators to post on.</div>
+        </div>
+        <div class="ob-section">
+          <div class="ob-section-title"><span class="ob-section-icon">🏆</span> Primary campaign goal</div>
+          <div class="chip-group">
+            <div class="chip" onclick="toggleChipSingle(this,'goal-chips')">Generate UGC Content</div>
+            <div class="chip" onclick="toggleChipSingle(this,'goal-chips')">Increase Sales</div>
+            <div class="chip" onclick="toggleChipSingle(this,'goal-chips')">Brand Awareness</div>
+            <div class="chip" onclick="toggleChipSingle(this,'goal-chips')">Product Launch</div>
+            <div class="chip" onclick="toggleChipSingle(this,'goal-chips')">Lead Generation</div>
+            <div class="chip" onclick="toggleChipSingle(this,'goal-chips')">Community Building</div>
+          </div>
+          <div id="goal-chips" style="display:none"></div>
+        </div>
+        <div style="display:flex;justify-content:space-between">
+          <button class="btn btn-ghost" onclick="obPrev(3)">← Back</button>
+          <button class="btn btn-fire btn-lg" onclick="obNext(3)">Next →</button>
+        </div>
+      </div>
+
+      <!-- ONBOARD STEP 4 — Budget & history -->
+      <div id="ob-step-4" class="wstep">
+        <div class="ob-section">
+          <div class="ob-section-title"><span class="ob-section-icon">💰</span> Monthly marketing budget</div>
+          <div class="budget-rail" id="budget-rail">
+            <div class="budget-pill" onclick="selBudget(this)">Under ₹25K</div>
+            <div class="budget-pill" onclick="selBudget(this)">₹25K – ₹75K</div>
+            <div class="budget-pill" onclick="selBudget(this)">₹75K – ₹2L</div>
+            <div class="budget-pill" onclick="selBudget(this)">₹2L – ₹5L</div>
+            <div class="budget-pill" onclick="selBudget(this)">₹5L+</div>
+          </div>
+        </div>
+        <div class="ob-section">
+          <div class="ob-section-title"><span class="ob-section-icon">📦</span> Team & experience</div>
+          <div class="fg">
+            <label class="fl">Company size</label>
+            <select class="fs" id="ob-size">
+              <option value="solo">Solo founder / freelancer</option>
+              <option value="small">2–10 employees</option>
+              <option value="mid">11–50 employees</option>
+              <option value="large">51–200 employees</option>
+              <option value="enterprise">200+ employees</option>
+            </select>
+          </div>
+          <div class="fg" style="margin-bottom:0">
+            <label class="fl">Influencer marketing experience</label>
+            <div class="chip-group">
+              <div class="chip" onclick="toggleChipSingle(this,'exp-chips')">First time</div>
+              <div class="chip" onclick="toggleChipSingle(this,'exp-chips')">Run 1–3 campaigns</div>
+              <div class="chip" onclick="toggleChipSingle(this,'exp-chips')">Regular — 4+ campaigns</div>
+              <div class="chip" onclick="toggleChipSingle(this,'exp-chips')">Expert / Agency</div>
+            </div>
+            <div id="exp-chips" style="display:none"></div>
+          </div>
+        </div>
+        <div style="display:flex;justify-content:space-between;margin-top:8px">
+          <button class="btn btn-ghost" onclick="obPrev(4)">← Back</button>
+          <button class="btn btn-purple btn-lg" onclick="completeOnboarding()">Complete Setup →</button>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════ -->
+<!--  SCREEN 2 — DASHBOARD                                 -->
+<!-- ══════════════════════════════════════════════════════ -->
+<div id="screen-dash" class="screen">
+  <div class="topbar">
+    <div class="logo" onclick="goTo('dash')"><span>◆</span> Spotlyt</div>
+    <div class="t-nav">
+      <a class="on" onclick="goTo('dash')">Dashboard</a>
+      <a onclick="goTo('report')">Reports</a>
+    </div>
+    <div class="u-chip"><div class="u-av" id="dash-av">?</div><span id="dash-name">Account</span></div>
+  </div>
+  <div class="layout">
+    <div class="sidebar">
+      <div class="sb-brand">
+        <div class="sb-brand-name" id="sb-name">Your account</div>
+        <div class="sb-brand-sub" id="sb-brand">—</div>
+      </div>
+      <div class="sb-new" onclick="goTo('wizard')">+ New Campaign</div>
+      <div class="sb-sec">Workspace</div>
+      <div class="sb-item on" onclick="goTo('dash')"><span class="sb-icon">▪</span> Dashboard</div>
+      <div class="sb-item" onclick="goTo('live')"><span class="sb-icon">📡</span> Live Campaign</div>
+      <div class="sb-item" onclick="goTo('perf')"><span class="sb-icon">📊</span> Performance</div>
+      <div class="sb-item" onclick="goTo('report')"><span class="sb-icon">📄</span> Final Report</div>
+      <div class="sb-sec">Account</div>
+      <div class="sb-item"><span class="sb-icon">⚙</span> Settings</div>
+    </div>
+    <div class="main">
+      <div class="page">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:32px">
+          <div>
+            <div class="h1" id="dash-greet">Welcome to Spotlyt</div>
+            <div class="sub" id="dash-sub">Manage, track, and launch campaigns</div>
+          </div>
+          <button class="btn btn-fire" onclick="goTo('wizard')">+ New Campaign</button>
+        </div>
+        <div class="g3" style="margin-bottom:32px">
+          <div class="cmpcard">
+            <div class="cmp-status st-live"><span style="width:6px;height:6px;border-radius:50%;background:var(--sage);display:inline-block"></span> Live</div>
+            <div class="cmp-name">Natural Glow Serum</div>
+            <div class="cmp-meta">3 creators · 4 weeks · Day 3</div>
+            <div class="pb"><div class="pf" style="width:60%"></div></div>
+            <div style="font-size:11px;color:var(--muted);font-weight:600;margin-bottom:14px">Reach: 1.4L / 2.15L (66%)</div>
+            <button class="btn btn-ghost btn-sm btn-w" onclick="goTo('live')">View Dashboard →</button>
+          </div>
+          <div class="cmpcard">
+            <div class="cmp-status st-draft">Draft</div>
+            <div class="cmp-name">Summer Skincare Bundle</div>
+            <div class="cmp-meta">Awaiting launch · Step 3</div>
+            <div class="pb"><div class="pf" style="width:55%"></div></div>
+            <div style="font-size:11px;color:var(--muted);font-weight:600;margin-bottom:14px">55% complete — resume wizard</div>
+            <button class="btn btn-ghost btn-sm btn-w" onclick="goTo('wizard')">Resume Campaign →</button>
+          </div>
+          <div class="cmpcard" style="display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:200px;border-style:dashed;background:var(--surface)">
+            <div style="font-size:28px;margin-bottom:10px">◆</div>
+            <div style="font-size:13px;font-weight:700;color:var(--muted);margin-bottom:14px">Start a new campaign</div>
+            <button class="btn btn-fire btn-sm" onclick="goTo('wizard')">+ New Campaign</button>
+          </div>
+        </div>
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
+          <div class="h2" style="margin:0">Performance snapshot</div>
+          <button class="btn btn-ghost btn-sm" onclick="goTo('report')">Full Report →</button>
+        </div>
+        <div class="g4">
+          <div class="mc"><div class="mc-lbl">Total Reach</div><div class="mc-val">1.42L</div><div class="mc-d dn">66% of predicted</div></div>
+          <div class="mc g"><div class="mc-lbl">Eng. Rate</div><div class="mc-val">5.5%</div><div class="mc-d up">+37% above avg ↑</div></div>
+          <div class="mc g"><div class="mc-lbl">CPM</div><div class="mc-val">₹162</div><div class="mc-d up">-14% vs benchmark ↓</div></div>
+          <div class="mc b"><div class="mc-lbl">Profile Visits</div><div class="mc-val">2,340</div><div class="mc-d" style="color:var(--sky)">318 link clicks</div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════ -->
+<!--  SCREEN 3 — WIZARD (4 STEPS, NO PAYMENT)              -->
+<!-- ══════════════════════════════════════════════════════ -->
+<div id="screen-wizard" class="screen">
+  <div class="topbar">
+    <div class="logo" onclick="goTo('dash')"><span>◆</span> Spotlyt</div>
+    <div class="stepper" id="stepper"></div>
+    <div style="display:flex;align-items:center;gap:10px;flex-shrink:0">
+      <span style="font-size:11px;color:var(--muted);font-weight:600;cursor:pointer">💾 Save draft</span>
+      <div class="u-chip" style="padding:4px"><div class="u-av" id="wiz-av">?</div></div>
+    </div>
+  </div>
+  <div class="main">
+    <div class="page" style="max-width:760px;margin:0 auto">
+
+      <!-- STEP 1: BRAND INTAKE -->
+      <div id="step-1" class="wstep on">
+        <div class="back" onclick="goTo('dash')">← Dashboard</div>
+        <div style="margin-bottom:26px">
+          <div class="h1">Brand intake</div>
+          <div class="sub">All three fields are required. Six AI agents run simultaneously after you submit.</div>
+        </div>
+        <div class="info-banner">
+          <p style="font-size:12px;color:var(--sky);font-weight:600;line-height:1.6">💡 Spotlyt needs your handle, goal, and budget to generate a complete strategy, persona, and content brief in one shot.</p>
+        </div>
+        <div class="fg">
+          <label class="fl">Brand URL or Instagram handle <span class="req">*</span></label>
+          <input class="fi" id="f1-handle" type="text" placeholder="@yourbrand or https://yourbrand.com" />
+          <div class="fh">Public profile data is analysed to build your brand persona.</div>
+        </div>
+        <div class="fg">
+          <label class="fl">Campaign goal <span class="req">*</span></label>
+          <select class="fs" id="f1-goal">
+            <option value="">Select your primary campaign goal</option>
+            <option value="ugc">Generate UGC Content</option>
+            <option value="conversions">Increase Conversions / Sales</option>
+            <option value="awareness">Drive Brand Awareness</option>
+            <option value="launch">Product Launch</option>
+            <option value="leads">Lead Generation</option>
+          </select>
+          <div class="fh">Determines creator tier, content format, and KPI benchmarks.</div>
+        </div>
+        <div class="fg">
+          <label class="fl">Budget <span class="req">*</span></label>
+          <input class="fi" id="f1-budget" type="text" placeholder="₹ e.g. 50,000" />
+          <div class="fh">Total campaign budget. Shapes creator tier selection and package pricing.</div>
+        </div>
+        <div style="display:flex;gap:10px;justify-content:flex-end;margin-top:8px">
+          <button class="btn btn-ghost" onclick="goTo('dash')">Cancel</button>
+          <button class="btn btn-fire btn-lg" onclick="submitStep1()">Run AI Analysis →</button>
+        </div>
+      </div>
+
+      <!-- STEP 2: COMBINED AI OUTPUT -->
+      <div id="step-2" class="wstep">
+        <div class="back" onclick="prevStep()">← Back</div>
+        <div style="margin-bottom:24px">
+          <div class="h1">Your strategy, persona + brief</div>
+          <div class="sub">All AI output together. Review each panel, edit what needs changing, then approve all.</div>
+        </div>
+        <div class="g3" style="align-items:start;margin-bottom:18px">
+          <div class="card card-fire">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
+              <div class="card-title" style="margin:0">Brand persona</div>
+              <button class="btn btn-ghost btn-sm">✎ Edit</button>
+            </div>
+            <div style="font-size:12px;font-weight:700;color:var(--ink);margin-bottom:2px" id="s2-handle">@yourbrand</div>
+            <div style="font-size:11px;color:var(--muted);margin-bottom:12px" id="s2-cat">Category · Platform detected</div>
+            <div style="margin-bottom:10px">
+              <div style="font-size:9px;font-weight:800;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin-bottom:6px">Tone & voice</div>
+              <span class="tag tg-fire">Authentic</span><span class="tag tg-fire">Educational</span><span class="tag tg-fire">Conversational</span>
+            </div>
+            <div style="margin-bottom:10px">
+              <div style="font-size:9px;font-weight:800;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin-bottom:6px">Target audience</div>
+              <span class="tag tg-gray" id="s2-aud">Women 22–35</span><span class="tag tg-gray">Urban metro</span>
+            </div>
+            <div style="margin-bottom:10px">
+              <div style="font-size:9px;font-weight:800;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin-bottom:6px">Content DNA</div>
+              <span class="tag tg-gray">Before/afters</span><span class="tag tg-gray">Demos</span><span class="tag tg-gray">Testimonials</span>
+            </div>
+            <div style="font-size:11px;color:var(--muted);border-top:1px solid var(--border);padding-top:10px;margin-top:4px">Confidence: <strong style="color:var(--fire)">8.4 / 10</strong></div>
+            <button class="btn btn-ghost btn-sm btn-w" style="margin-top:10px">↻ Regenerate persona</button>
+          </div>
+          <div class="card">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
+              <div class="card-title" style="margin:0">Campaign strategy</div>
+              <button class="btn btn-ghost btn-sm">✎ Edit</button>
+            </div>
+            <div class="kv"><div class="kk">Channel</div><div class="kv_">Instagram Reels</div></div>
+            <div class="kv"><div class="kk">Creator tier</div><div class="kv_">70% Micro / 30% Nano</div></div>
+            <div class="kv"><div class="kk">Creator count</div><div class="kv_">3 creators</div></div>
+            <div class="kv"><div class="kk">Duration</div><div class="kv_">4 weeks</div></div>
+            <div class="kv"><div class="kk">Primary KPI</div><div class="kv_" id="s2-kpi">UGC Volume</div></div>
+            <div class="kv"><div class="kk">Est. reach</div><div class="kv_">2.1L – 2.8L</div></div>
+            <div class="kv" style="border:none"><div class="kk">Est. CPM</div><div class="kv_">₹155 <span class="tag tg-sage" style="font-size:10px;padding:2px 6px">-18% vs avg</span></div></div>
+            <div class="why">
+              <div class="why-lbl">✦ Why this works</div>
+              <div class="why-txt">Micro-creators in UGC skincare show 3.2× higher engagement. Your CPM of ₹155 is 18% below category avg of ₹189. Based on 42 similar D2C campaigns.</div>
+            </div>
+            <button class="btn btn-ghost btn-sm btn-w" style="margin-top:10px">↻ Adjust strategy</button>
+          </div>
+          <div class="card card-surface">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
+              <div class="card-title" style="margin:0">UGC content brief</div>
+              <button class="btn btn-ghost btn-sm">✎ Edit</button>
+            </div>
+            <div style="margin-bottom:10px">
+              <div style="font-size:9px;font-weight:800;text-transform:uppercase;letter-spacing:.07em;color:var(--muted);margin-bottom:4px">Hook</div>
+              <div style="font-size:13px;font-weight:700;color:var(--ink)">"7-day glow transformation"</div>
+            </div>
+            <div style="margin-bottom:10px">
+              <div style="font-size:9px;font-weight:800;text-transform:uppercase;letter-spacing:.07em;color:var(--muted);margin-bottom:4px">Format</div>
+              <div style="font-size:13px;font-weight:700;color:var(--ink)">Before/after + testimonial</div>
+            </div>
+            <div style="margin-bottom:10px">
+              <div style="font-size:9px;font-weight:800;text-transform:uppercase;letter-spacing:.07em;color:var(--muted);margin-bottom:4px">CTA</div>
+              <div style="font-size:13px;font-weight:700;color:var(--ink)">Link in bio</div>
+            </div>
+            <div style="margin-bottom:10px">
+              <div style="font-size:9px;font-weight:800;text-transform:uppercase;letter-spacing:.07em;color:var(--muted);margin-bottom:4px">Length</div>
+              <div style="font-size:13px;font-weight:700;color:var(--ink)">15–30 seconds</div>
+            </div>
+            <div>
+              <div style="font-size:9px;font-weight:800;text-transform:uppercase;letter-spacing:.07em;color:var(--muted);margin-bottom:4px">Key message</div>
+              <div style="font-size:12px;color:var(--ink-3);line-height:1.6">No harsh chemicals. Visible glow in 7 days. Dermatologist-tested formula.</div>
+            </div>
+            <button class="btn btn-ghost btn-sm btn-w" style="margin-top:10px">↻ Regenerate brief</button>
+          </div>
+        </div>
+        <div style="display:flex;gap:10px;justify-content:flex-end;padding-top:8px">
+          <button class="btn btn-ghost" onclick="prevStep()">← Back</button>
+          <button class="btn btn-fire btn-lg" onclick="goStep(3)">Approve all & continue →</button>
+        </div>
+      </div>
+
+      <!-- STEP 3: REVIEW + BRIEF DETAILS -->
+      <div id="step-3" class="wstep">
+        <div class="back" onclick="prevStep()">← Back</div>
+        <div style="margin-bottom:24px">
+          <div class="h1">Review all details</div>
+          <div class="sub">Everything in one place. Fill in campaign specifics before launching.</div>
+        </div>
+        <div class="rv-block">
+          <div class="rv-head">
+            <div class="rv-head-title">Brand inputs</div>
+            <button class="btn btn-ghost btn-sm" onclick="goStep(1)">Edit →</button>
+          </div>
+          <div class="rv-body">
+            <div class="kv"><div class="kk">Handle / URL</div><div class="kv_" id="rv-handle">—</div></div>
+            <div class="kv"><div class="kk">Campaign goal</div><div class="kv_" id="rv-goal">—</div></div>
+            <div class="kv" style="border:none"><div class="kk">Budget</div><div class="kv_" id="rv-budget">—</div></div>
+          </div>
+        </div>
+        <div class="rv-block">
+          <div class="rv-head">
+            <div class="rv-head-title">Campaign strategy</div>
+            <button class="btn btn-ghost btn-sm" onclick="goStep(2)">Edit →</button>
+          </div>
+          <div class="rv-body">
+            <div class="kv"><div class="kk">Channel</div><div class="kv_">Instagram Reels</div></div>
+            <div class="kv"><div class="kk">Creator tier</div><div class="kv_">70% Micro / 30% Nano</div></div>
+            <div class="kv"><div class="kk">Duration</div><div class="kv_">4 weeks</div></div>
+            <div class="kv"><div class="kk">Est. reach</div><div class="kv_">2.1L – 2.8L</div></div>
+            <div class="kv" style="border:none"><div class="kk">Est. CPM</div><div class="kv_">₹155 (18% below avg)</div></div>
+          </div>
+        </div>
+        <div class="rv-block">
+          <div class="rv-head"><div class="rv-head-title">Campaign brief — fill in below</div></div>
+          <div class="rv-body">
+            <div class="fg">
+              <label class="fl">Campaign name <span class="req">*</span></label>
+              <input class="fi" id="f3-name" type="text" placeholder='e.g. "Brand — Autumn UGC Launch 2025"' />
+            </div>
+            <div class="fg-row">
+              <div class="fg">
+                <label class="fl">Posting window</label>
+                <select class="fs" id="f3-window">
+                  <option value="tue-thu">Tue–Thu, 8–10pm IST</option>
+                  <option value="mon-wed-fri">Mon/Wed/Fri, 7–9pm IST</option>
+                  <option value="weekend">Weekend, 10am–12pm IST</option>
+                </select>
+              </div>
+              <div class="fg">
+                <label class="fl">Content format</label>
+                <select class="fs" id="f3-format">
+                  <option value="reel-story">1 Reel + 1 Story</option>
+                  <option value="reel">Reel only</option>
+                  <option value="2reels">2 Reels</option>
+                </select>
+              </div>
+            </div>
+            <div class="fg">
+              <label class="fl">Brand hashtags</label>
+              <input class="fi" id="f3-hashtags" type="text" placeholder="#YourBrand #ProductName (max 5 hashtags)" />
+            </div>
+            <div class="fg" style="margin-bottom:0">
+              <label class="fl">Tracking link</label>
+              <input class="fi" id="f3-link" type="text" placeholder="https://yourbrand.com?utm_source=spotlyt" />
+              <div class="fh">Optional — used for conversion tracking.</div>
+            </div>
+          </div>
+        </div>
+        <div style="display:flex;gap:10px;justify-content:flex-end">
+          <button class="btn btn-ghost" onclick="prevStep()">← Back</button>
+          <button class="btn btn-fire btn-lg" onclick="goStep(4)">Confirm & choose creators →</button>
+        </div>
+      </div>
+
+      <!-- STEP 4: CREATOR SELECTION (was step 5, no payment) -->
+      <div id="step-4" class="wstep">
+        <div class="back" onclick="prevStep()">← Back</div>
+        <div style="margin-bottom:6px">
+          <div class="tag tg-sage" style="margin-bottom:10px">✓ AI shortlist ready — select your creators</div>
+          <div class="h1">Select your creators</div>
+          <div class="sub">Shortlisted by Agent 6 (Talent Manager) for your brief. Select 2–4 to launch.</div>
+        </div>
+        <div class="g4" style="margin-bottom:14px;margin-top:20px">
+          <div class="cc" onclick="toggleCC(this)">
+            <div class="cc-match hi">96% ✨ Best match</div>
+            <div class="cc-av" style="background:#FFF1EE">🌿</div>
+            <div class="cc-name">Priya Sharma</div>
+            <div class="cc-handle">@priyabeauty_</div>
+            <div class="cc-stats">
+              <div class="cs"><div class="cs-v">142K</div><div class="cs-l">Followers</div></div>
+              <div class="cs"><div class="cs-v">5.2%</div><div class="cs-l">ER</div></div>
+              <div class="cs"><div class="cs-v">91%</div><div class="cs-l">Authentic</div></div>
+              <div class="cs"><div class="cs-v">14 UGC</div><div class="cs-l">History</div></div>
+            </div>
+            <div class="cc-price">₹16,500 / Reel<div class="tag tg-sage" style="display:flex;justify-content:center;margin:4px 0 0">Fair ✓</div></div>
+            <button class="btn btn-ghost btn-sm btn-w" style="margin-top:8px" onclick="event.stopPropagation()">Swap creator</button>
+          </div>
+          <div class="cc" onclick="toggleCC(this)">
+            <div class="cc-match hi">91%</div>
+            <div class="cc-av" style="background:var(--sage-soft)">✨</div>
+            <div class="cc-name">Meera Nair</div>
+            <div class="cc-handle">@meeranaturals</div>
+            <div class="cc-stats">
+              <div class="cs"><div class="cs-v">76K</div><div class="cs-l">Followers</div></div>
+              <div class="cs"><div class="cs-v">7.4%</div><div class="cs-l">ER</div></div>
+              <div class="cs"><div class="cs-v">89%</div><div class="cs-l">Authentic</div></div>
+              <div class="cs"><div class="cs-v">9 UGC</div><div class="cs-l">History</div></div>
+            </div>
+            <div class="cc-price">₹9,500 / Reel<div class="tag tg-sage" style="display:flex;justify-content:center;margin:4px 0 0">Fair ✓</div></div>
+            <button class="btn btn-ghost btn-sm btn-w" style="margin-top:8px" onclick="event.stopPropagation()">Swap creator</button>
+          </div>
+          <div class="cc" onclick="toggleCC(this)">
+            <div class="cc-match med">87%</div>
+            <div class="cc-av" style="background:var(--sky-soft)">💆</div>
+            <div class="cc-name">Ananya Sen</div>
+            <div class="cc-handle">@ananya.glows</div>
+            <div class="cc-stats">
+              <div class="cs"><div class="cs-v">52K</div><div class="cs-l">Followers</div></div>
+              <div class="cs"><div class="cs-v">8.1%</div><div class="cs-l">ER</div></div>
+              <div class="cs"><div class="cs-v">94%</div><div class="cs-l">Authentic</div></div>
+              <div class="cs"><div class="cs-v">7 UGC</div><div class="cs-l">History</div></div>
+            </div>
+            <div class="cc-price">₹7,000 / Reel<div class="tag tg-sage" style="display:flex;justify-content:center;margin:4px 0 0">Fair ✓</div></div>
+            <button class="btn btn-ghost btn-sm btn-w" style="margin-top:8px" onclick="event.stopPropagation()">Swap creator</button>
+          </div>
+          <div class="cc" onclick="toggleCC(this)">
+            <div class="cc-match med">83%</div>
+            <div class="cc-av" style="background:var(--gold-soft)">🌸</div>
+            <div class="cc-name">Divya Mehta</div>
+            <div class="cc-handle">@divyaskincare</div>
+            <div class="cc-stats">
+              <div class="cs"><div class="cs-v">38K</div><div class="cs-l">Followers</div></div>
+              <div class="cs"><div class="cs-v">9.3%</div><div class="cs-l">ER</div></div>
+              <div class="cs"><div class="cs-v">96%</div><div class="cs-l">Authentic</div></div>
+              <div class="cs"><div class="cs-v">5 UGC</div><div class="cs-l">History</div></div>
+            </div>
+            <div class="cc-price">₹5,500 / Reel<div class="tag tg-gold" style="display:flex;justify-content:center;margin:4px 0 0">Below market</div></div>
+            <button class="btn btn-ghost btn-sm btn-w" style="margin-top:8px" onclick="event.stopPropagation()">Swap creator</button>
+          </div>
+        </div>
+        <div id="cc-err" style="font-size:12px;color:var(--fire);font-weight:700;margin-bottom:10px;display:none">Please select 2–4 creators to launch.</div>
+        <div style="display:flex;gap:10px;justify-content:flex-end">
+          <button class="btn btn-ghost" onclick="prevStep()">← Back</button>
+          <button class="btn btn-sage btn-lg" onclick="launchCampaign()">🚀 Launch Campaign!</button>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════ -->
+<!--  SCREEN 4 — LIVE DASHBOARD                            -->
+<!-- ══════════════════════════════════════════════════════ -->
+<div id="screen-live" class="screen">
+  <div class="topbar">
+    <div class="logo" onclick="goTo('dash')"><span>◆</span> Spotlyt</div>
+    <div style="flex:1;padding:0 18px;font-size:12px;font-weight:700;color:var(--ink-3)">
+      Natural Glow Serum · Day 3 · <span style="display:inline-flex;align-items:center;gap:4px;padding:3px 9px;border-radius:20px;font-size:10px;font-weight:800;background:var(--gold-soft);color:var(--gold);margin-left:4px">⚠ Needs Attention</span>
+    </div>
+    <button class="btn btn-ghost btn-sm" onclick="goTo('perf')">Full Analytics →</button>
+  </div>
+  <div class="layout">
+    <div class="sidebar">
+      <div class="sb-new" onclick="goTo('wizard')">+ New Campaign</div>
+      <div class="sb-sec">Workspace</div>
+      <div class="sb-item" onclick="goTo('dash')"><span class="sb-icon">▪</span> Dashboard</div>
+      <div class="sb-item on" onclick="goTo('live')"><span class="sb-icon">📡</span> Live Campaign</div>
+      <div class="sb-item" onclick="goTo('perf')"><span class="sb-icon">📊</span> Performance</div>
+      <div class="sb-item" onclick="goTo('report')"><span class="sb-icon">📄</span> Final Report</div>
+    </div>
+    <div class="main">
+      <div class="page">
+        <div style="margin-bottom:24px">
+          <div class="h1">Campaign Dashboard</div>
+          <div class="sub">Natural Glow Serum · Live since 3 days</div>
+        </div>
+        <div class="g4" style="margin-bottom:22px">
+          <div class="mc"><div class="mc-lbl">Total Reach</div><div class="mc-val">1.42L</div><div class="mc-d dn">66% of 2.15L predicted</div></div>
+          <div class="mc g"><div class="mc-lbl">Engagements</div><div class="mc-val">7,840</div><div class="mc-d up">ER: 5.5% · +37% ↑</div></div>
+          <div class="mc g"><div class="mc-lbl">CPM</div><div class="mc-val">₹162</div><div class="mc-d up">vs ₹189 avg · -14% ↓</div></div>
+          <div class="mc b"><div class="mc-lbl">Profile Visits</div><div class="mc-val">2,340</div><div class="mc-d" style="color:var(--sky)">318 link clicks</div></div>
+        </div>
+        <div class="alert-box">
+          <div class="alert-title">⚠ Optimisation alert — @meeranaturals</div>
+          <div class="alert-body">Creator is at 40% of predicted reach at 72 hours. Sunday 11am post is underperforming. Recommend Story repost Tuesday 8–10pm — historically recovers 22% of projected shortfall.</div>
+          <div style="display:flex;gap:10px">
+            <button class="btn btn-fire btn-sm">Approve Repost</button>
+            <button class="btn btn-ghost btn-sm">Swap Creator</button>
+            <button class="btn btn-ghost btn-sm">Dismiss</button>
+          </div>
+        </div>
+        <div class="g2">
+          <div class="card">
+            <div class="card-title">Creator Performance</div>
+            <div class="cp-row">
+              <div style="font-size:20px;flex-shrink:0">🌿</div>
+              <div class="cp-info">
+                <div class="cp-name">Priya Sharma</div>
+                <div class="cp-meta">@priyabeauty_ · 92% of predicted reach</div>
+                <div class="cp-bar-w"><div class="cp-bar" style="width:92%;background:var(--sage)"></div></div>
+              </div>
+              <span class="tag tg-sage">On track ✓</span>
+            </div>
+            <div class="cp-row">
+              <div style="font-size:20px;flex-shrink:0">✨</div>
+              <div class="cp-info">
+                <div class="cp-name">Meera Nair</div>
+                <div class="cp-meta">@meeranaturals · 40% of predicted reach</div>
+                <div class="cp-bar-w"><div class="cp-bar" style="width:40%;background:var(--gold)"></div></div>
+              </div>
+              <span class="tag tg-gold">⚠ Alert</span>
+            </div>
+            <div class="cp-row" style="margin-bottom:0">
+              <div style="font-size:20px;flex-shrink:0">💆</div>
+              <div class="cp-info">
+                <div class="cp-name">Ananya Sen</div>
+                <div class="cp-meta">@ananya.glows · 88% of predicted reach</div>
+                <div class="cp-bar-w"><div class="cp-bar" style="width:88%;background:var(--sage)"></div></div>
+              </div>
+              <span class="tag tg-sage">On track ✓</span>
+            </div>
+          </div>
+          <div class="card">
+            <div class="card-title">Conversion Funnel</div>
+            <div class="fn-row"><div class="fn-lbl"><span>Impressions</span><span>142,000</span></div><div class="fn-bar" style="width:100%;background:var(--ink)">142K</div></div>
+            <div class="fn-row"><div class="fn-lbl"><span>Profile Visits (1.6%)</span><span>2,340</span></div><div class="fn-bar" style="width:65%;background:var(--fire)">2,340</div></div>
+            <div class="fn-row"><div class="fn-lbl"><span>Link Clicks (13.6%)</span><span>318</span></div><div class="fn-bar" style="width:35%;background:var(--sage)">318</div></div>
+            <div class="fn-row" style="margin:0"><div class="fn-lbl"><span>Est. Orders (12%)</span><span>38</span></div><div class="fn-bar" style="width:15%;background:var(--sky)">38</div></div>
+          </div>
+        </div>
+        <div style="display:flex;gap:10px;margin-top:20px">
+          <button class="btn btn-ghost" onclick="goTo('dash')">← Dashboard</button>
+          <button class="btn btn-fire" onclick="goTo('perf')">Detailed Analytics →</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════ -->
+<!--  SCREEN 5 — PERFORMANCE                               -->
+<!-- ══════════════════════════════════════════════════════ -->
+<div id="screen-perf" class="screen">
+  <div class="topbar">
+    <div class="logo" onclick="goTo('dash')"><span>◆</span> Spotlyt</div>
+    <div style="flex:1;padding:0 18px;font-size:12px;font-weight:700;color:var(--ink-3)">Natural Glow Serum · Day 3</div>
+    <button class="btn btn-ghost btn-sm" onclick="goTo('report')">Final Report →</button>
+  </div>
+  <div class="layout">
+    <div class="sidebar">
+      <div class="sb-new" onclick="goTo('wizard')">+ New Campaign</div>
+      <div class="sb-sec">Workspace</div>
+      <div class="sb-item" onclick="goTo('dash')"><span class="sb-icon">▪</span> Dashboard</div>
+      <div class="sb-item" onclick="goTo('live')"><span class="sb-icon">📡</span> Live Campaign</div>
+      <div class="sb-item on" onclick="goTo('perf')"><span class="sb-icon">📊</span> Performance</div>
+      <div class="sb-item" onclick="goTo('report')"><span class="sb-icon">📄</span> Final Report</div>
+    </div>
+    <div class="main">
+      <div class="page">
+        <div style="margin-bottom:24px">
+          <div class="h1">Performance Analytics</div>
+          <div class="sub">Real-time metrics and optimisation insights · Refreshes every 6 hours</div>
+        </div>
+        <div class="g4" style="margin-bottom:22px">
+          <div class="mc"><div class="mc-lbl">Total Reach</div><div class="mc-val">1.42L</div><div class="mc-d dn">66% of predicted</div></div>
+          <div class="mc g"><div class="mc-lbl">Eng. Rate</div><div class="mc-val">5.5%</div><div class="mc-d up">+37% above avg</div></div>
+          <div class="mc g"><div class="mc-lbl">CPM</div><div class="mc-val">₹162</div><div class="mc-d up">21% below avg</div></div>
+          <div class="mc a"><div class="mc-lbl">Est. ROI</div><div class="mc-val">3.4×</div><div class="mc-d up">38 tracked orders</div></div>
+        </div>
+        <div class="g2">
+          <div class="card">
+            <div class="card-title">What's working</div>
+            <div style="display:flex;flex-direction:column;gap:10px;font-size:13px;font-weight:600">
+              <div style="display:flex;gap:10px"><span>✅</span><span>Tue 8–10pm posts drove <strong>62% of reach</strong></span></div>
+              <div style="display:flex;gap:10px"><span>✅</span><span>Reels outperformed Stories <strong>4:1 in engagement</strong></span></div>
+              <div style="display:flex;gap:10px"><span>✅</span><span>Before/after hook: <strong>22s avg watch time</strong> (norm 8s)</span></div>
+            </div>
+            <div class="divider"></div>
+            <div class="card-title" style="margin-bottom:10px">Opportunities</div>
+            <div style="display:flex;flex-direction:column;gap:10px;font-size:13px;font-weight:600">
+              <div style="display:flex;gap:10px"><span>⚡</span><span>+1 Hindi Tier-2 creator → est. <strong>+35% reach</strong></span></div>
+              <div style="display:flex;gap:10px"><span>📍</span><span>Tier-2 cities: <strong>18% higher engagement</strong> than metro avg</span></div>
+            </div>
+          </div>
+          <div class="card">
+            <div class="card-title">Audience breakdown</div>
+            <div class="kv"><div class="kk">Women 22–28</div><div class="kv_">54%</div></div>
+            <div class="kv"><div class="kk">Women 29–35</div><div class="kv_">28%</div></div>
+            <div class="kv"><div class="kk">Mumbai/Delhi/Bangalore</div><div class="kv_">61%</div></div>
+            <div class="kv"><div class="kk">Tier-2 cities</div><div class="kv_">39%</div></div>
+            <div class="kv" style="border:none"><div class="kk">Reel view share</div><div class="kv_">89%</div></div>
+          </div>
+        </div>
+        <div style="display:flex;gap:10px;margin-top:20px">
+          <button class="btn btn-ghost" onclick="goTo('live')">← Live Dashboard</button>
+          <button class="btn btn-fire" onclick="goTo('report')">Final Report →</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════ -->
+<!--  SCREEN 6 — FINAL REPORT                              -->
+<!-- ══════════════════════════════════════════════════════ -->
+<div id="screen-report" class="screen">
+  <div class="topbar">
+    <div class="logo" onclick="goTo('dash')"><span>◆</span> Spotlyt</div>
+    <div style="flex:1;padding:0 18px;font-size:12px;font-weight:700;color:var(--ink-3)">Natural Glow Serum · Completed ✓</div>
+    <div style="display:flex;gap:8px">
+      <button class="btn btn-ghost btn-sm">⬇ PDF</button>
+      <button class="btn btn-ghost btn-sm">📤 Share</button>
+    </div>
+  </div>
+  <div class="layout">
+    <div class="sidebar">
+      <div class="sb-new" onclick="goTo('wizard')">+ New Campaign</div>
+      <div class="sb-sec">Workspace</div>
+      <div class="sb-item" onclick="goTo('dash')"><span class="sb-icon">▪</span> Dashboard</div>
+      <div class="sb-item" onclick="goTo('live')"><span class="sb-icon">📡</span> Live Campaign</div>
+      <div class="sb-item" onclick="goTo('perf')"><span class="sb-icon">📊</span> Performance</div>
+      <div class="sb-item on" onclick="goTo('report')"><span class="sb-icon">📄</span> Final Report</div>
+    </div>
+    <div class="main">
+      <div class="page">
+        <div style="margin-bottom:24px">
+          <div class="h1">Campaign Final Report</div>
+          <div class="sub">Natural Glow Serum · Completed · Auto-generated within 24h</div>
+        </div>
+        <div class="g4" style="margin-bottom:22px">
+          <div class="mc g"><div class="mc-lbl">Total Reach</div><div class="mc-val">2.24L</div><div class="mc-d up">104% of predicted ✓</div></div>
+          <div class="mc g"><div class="mc-lbl">Engagements</div><div class="mc-val">12,480</div><div class="mc-d up">ER: 5.6% · +37% ↑</div></div>
+          <div class="mc g"><div class="mc-lbl">Final CPM</div><div class="mc-val">₹148</div><div class="mc-d up">21% below avg ₹189</div></div>
+          <div class="mc b"><div class="mc-lbl">Est. ROI</div><div class="mc-val">3.4×</div><div class="mc-d" style="color:var(--sky)">41 tracked sales</div></div>
+        </div>
+        <div class="g2">
+          <div class="card">
+            <div class="card-title">Creator scorecards</div>
+            <div style="background:var(--sage-soft);border-radius:var(--r-sm);padding:14px;margin-bottom:10px">
+              <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px">
+                <span style="font-size:18px">🌿</span>
+                <div style="flex:1"><div style="font-size:13px;font-weight:800;color:var(--sage-dark)">Priya Sharma ⭐ Top Performer</div><div style="font-size:11px;color:var(--muted)">@priyabeauty_</div></div>
+                <span class="tag tg-sage">Rebook</span>
+              </div>
+              <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;text-align:center">
+                <div><div style="font-family:'Syne',sans-serif;font-size:15px;font-weight:700">1.38L</div><div style="font-size:9px;color:var(--muted);font-weight:700;text-transform:uppercase">Reach</div></div>
+                <div><div style="font-family:'Syne',sans-serif;font-size:15px;font-weight:700">5.8%</div><div style="font-size:9px;color:var(--muted);font-weight:700;text-transform:uppercase">ER</div></div>
+                <div><div style="font-family:'Syne',sans-serif;font-size:15px;font-weight:700">₹138</div><div style="font-size:9px;color:var(--muted);font-weight:700;text-transform:uppercase">CPM</div></div>
+              </div>
+            </div>
+            <div style="background:var(--fire-soft);border-radius:var(--r-sm);padding:14px">
+              <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px">
+                <span style="font-size:18px">✨</span>
+                <div style="flex:1"><div style="font-size:13px;font-weight:800;color:var(--fire)">Meera Nair · Good</div><div style="font-size:11px;color:var(--muted)">@meeranaturals</div></div>
+                <span class="tag tg-fire">Consider</span>
+              </div>
+              <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;text-align:center">
+                <div><div style="font-family:'Syne',sans-serif;font-size:15px;font-weight:700">0.54L</div><div style="font-size:9px;color:var(--muted);font-weight:700;text-transform:uppercase">Reach</div></div>
+                <div><div style="font-family:'Syne',sans-serif;font-size:15px;font-weight:700">4.9%</div><div style="font-size:9px;color:var(--muted);font-weight:700;text-transform:uppercase">ER</div></div>
+                <div><div style="font-family:'Syne',sans-serif;font-size:15px;font-weight:700">₹165</div><div style="font-size:9px;color:var(--muted);font-weight:700;text-transform:uppercase">CPM</div></div>
+              </div>
+            </div>
+          </div>
+          <div>
+            <div class="next-rec" style="margin-bottom:14px">
+              <div class="nr-title">🚀 Next Campaign Recommendation</div>
+              <div class="nr-item">→ Keep Priya Sharma (top performer)</div>
+              <div class="nr-item">→ Replace Meera with Hindi Tier-2 creator</div>
+              <div class="nr-item">→ Increase budget to ₹70K</div>
+              <div class="nr-item">→ Allocate 70% to Reels</div>
+              <div class="nr-item">→ Add 2 Story reposts Tue/Thu 8pm</div>
+              <div class="nr-hl">💡 Expected: +35% reach · same CPM · Est. 4.1× ROI</div>
+              <button class="btn btn-fire btn-w" onclick="goTo('wizard')">Launch Campaign #2 →</button>
+            </div>
+            <div class="card">
+              <div class="card-title">Export</div>
+              <div style="display:flex;gap:10px">
+                <button class="btn btn-ghost btn-sm" style="flex:1">⬇ Download PDF</button>
+                <button class="btn btn-ghost btn-sm" style="flex:1">📤 Share card</button>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div style="display:flex;gap:10px;margin-top:20px">
+          <button class="btn btn-ghost" onclick="goTo('dash')">← Dashboard</button>
+          <button class="btn btn-fire btn-lg" onclick="goTo('wizard')">+ Start Campaign #2 →</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ── STATE ── */
+let curStep = 1;
+let obStep = 1;
+const STEPS = 4;
+const STEP_LABELS = ['Brand intake','AI output','Review','Creators'];
+const goalMap = {ugc:'Generate UGC Content',conversions:'Increase Conversions / Sales',awareness:'Drive Brand Awareness',launch:'Product Launch',leads:'Lead Generation'};
+const kpiMap  = {ugc:'UGC Volume',conversions:'Conversions (CPA)',awareness:'Reach & Impressions',launch:'Launch Velocity',leads:'Lead Count'};
+
+/* ── NAVIGATION ── */
+function goTo(id){
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  const el=document.getElementById('screen-'+id);
+  if(el){el.classList.add('active');window.scrollTo(0,0)}
+  if(id==='wizard') initWizard();
+}
+
+/* ── SSO ── */
+function openSSO(){document.getElementById('sso-modal').classList.add('on')}
+function closeSSO(){document.getElementById('sso-modal').classList.remove('on')}
+
+function authWith(){
+  closeSSO();
+  setTimeout(()=>{goTo('onboard')},300);
+}
+
+/* ── ONBOARDING ── */
+function updateObProgress(step){
+  for(let i=1;i<=4;i++){
+    const seg=document.getElementById('obs'+i);
+    seg.classList.toggle('done',i<=step);
+  }
+  const labels=['Step 1 of 4 — Brand basics','Step 2 of 4 — Target audience','Step 3 of 4 — Platforms & goals','Step 4 of 4 — Budget & team'];
+  document.getElementById('ob-step-label').textContent=labels[step-1];
+}
+
+function obNext(step){
+  document.getElementById('ob-step-'+step).classList.remove('on');
+  obStep=step+1;
+  document.getElementById('ob-step-'+obStep).classList.add('on');
+  updateObProgress(obStep);
+  window.scrollTo(0,0);
+}
+
+function obPrev(step){
+  document.getElementById('ob-step-'+step).classList.remove('on');
+  obStep=step-1;
+  document.getElementById('ob-step-'+obStep).classList.add('on');
+  updateObProgress(obStep);
+  window.scrollTo(0,0);
+}
+
+function completeOnboarding(){
+  const brandVal = document.getElementById('ob-brand').value.trim() || 'Natural Glow Studio';
+  const industryEl = document.getElementById('ob-industry');
+  const industryText = industryEl.options[industryEl.selectedIndex].text || 'Beauty & Skincare';
+
+  // Set user info across all screens
+  const initials = brandVal.split(' ').map(w=>w[0]).join('').toUpperCase().slice(0,2)||'NG';
+  ['dash-av','wiz-av','ob-av'].forEach(id=>{
+    const el=document.getElementById(id);
+    if(el) el.textContent=initials;
+  });
+  const nameEl=document.getElementById('dash-name');
+  if(nameEl) nameEl.textContent=brandVal;
+  const greetEl=document.getElementById('dash-greet');
+  if(greetEl) greetEl.textContent='Welcome back, '+brandVal+' 👋';
+  const subEl=document.getElementById('dash-sub');
+  if(subEl) subEl.textContent=industryText+' · Manage, track, and launch campaigns';
+  const sbNameEl=document.getElementById('sb-name');
+  if(sbNameEl) sbNameEl.textContent=brandVal;
+  const sbBrandEl=document.getElementById('sb-brand');
+  if(sbBrandEl) sbBrandEl.textContent=industryText;
+
+  // Show onboarding complete overlay briefly then go to dashboard
+  const ov=document.getElementById('ai-ov');
+  const title=document.getElementById('ai-title');
+  const msg=document.getElementById('ai-msg');
+  const prog=document.getElementById('ai-prog');
+  prog.style.display='none';
+  title.textContent='Setting up your workspace';
+  msg.textContent='Personalising your dashboard…';
+  ov.classList.add('on');
+  setTimeout(()=>{
+    msg.textContent='Calibrating AI benchmarks for '+industryText+'…';
+    setTimeout(()=>{
+      ov.classList.remove('on');
+      prog.style.display='flex';
+      title.textContent='Running AI agents';
+      msg.textContent='Initialising pipeline…';
+      goTo('dash');
+    },1400);
+  },1200);
+}
+
+/* ── WIZARD ── */
+function initWizard(){
+  curStep=1;
+  document.querySelectorAll('.wstep').forEach(s=>s.classList.remove('on'));
+  document.getElementById('step-1').classList.add('on');
+  document.querySelectorAll('.cc').forEach(c=>c.classList.remove('sel'));
+  document.getElementById('cc-err').style.display='none';
+  renderStepper();
+}
+
+function renderStepper(){
+  const bar=document.getElementById('stepper');
+  if(!bar) return;
+  let h='';
+  for(let i=0;i<STEPS;i++){
+    const done=i<curStep-1, curr=i===curStep-1;
+    const cls=done?'done':curr?'curr':'';
+    const icon=done?'✓':i+1;
+    h+=`<div class="s-dot ${cls}">${icon}<span class="s-lbl">${STEP_LABELS[i]}</span></div>`;
+    if(i<STEPS-1) h+=`<div class="s-line ${done?'done':''}"></div>`;
+  }
+  bar.innerHTML=h;
+}
+
+function goStep(n){
+  document.getElementById('step-'+curStep).classList.remove('on');
+  curStep=n;
+  document.getElementById('step-'+curStep).classList.add('on');
+  renderStepper();
+  window.scrollTo(0,0);
+}
+
+function prevStep(){
+  if(curStep<=1){goTo('dash');return}
+  goStep(curStep-1);
+}
+
+/* ── STEP 1 ── */
+function submitStep1(){
+  const handle=document.getElementById('f1-handle').value.trim();
+  const goal=document.getElementById('f1-goal').value;
+  const budget=document.getElementById('f1-budget').value.trim();
+
+  // Use defaults if empty (no hard blocking)
+  const h=handle||'@yourbrand';
+  const g=goal||'ugc';
+  const b=budget||'₹50,000';
+
+  const displayHandle=h.startsWith('@')?h:'@'+h.replace(/https?:\/\//,'').split('/')[0];
+  document.getElementById('s2-handle').textContent=displayHandle;
+  document.getElementById('s2-cat').textContent='Beauty & Skincare · Instagram detected';
+  document.getElementById('s2-kpi').textContent=kpiMap[g]||g;
+  document.getElementById('rv-handle').textContent=displayHandle;
+  document.getElementById('rv-goal').textContent=goalMap[g]||g;
+  const bNum=parseInt((b||'50000').replace(/[₹,\s]/g,''))||50000;
+  document.getElementById('rv-budget').textContent='₹'+bNum.toLocaleString('en-IN');
+
+  runAllAgents(()=>goStep(2));
+}
+
+/* ── AI AGENTS ── */
+function runAllAgents(callback){
+  const ov=document.getElementById('ai-ov');
+  const title=document.getElementById('ai-title');
+  const msg=document.getElementById('ai-msg');
+  const prog=document.getElementById('ai-prog');
+  const ids=['ap1','ap2','ap3','ap4','ap5'];
+  const msgs=[
+    'Crawling brand handle — reading public profile data…',
+    'Fetching category benchmarks — skincare D2C…',
+    'Designing campaign strategy — matching creator tier…',
+    'Calculating pricing packages — applying benchmarks…',
+    'Writing UGC content brief — generating hook + format…'
+  ];
+  prog.style.display='flex';
+  title.textContent='Running AI agents';
+  ov.classList.add('on');
+  ids.forEach(id=>{const el=document.getElementById(id);el.classList.remove('done','running')});
+  let i=0;
+  msg.textContent=msgs[0];
+  const tick=setInterval(()=>{
+    if(i<ids.length){
+      if(i>0){document.getElementById(ids[i-1]).classList.remove('running');document.getElementById(ids[i-1]).classList.add('done')}
+      document.getElementById(ids[i]).classList.add('running');
+      msg.textContent=msgs[i]||'Finalising…';
+      i++;
+    } else {
+      document.getElementById(ids[ids.length-1]).classList.remove('running');
+      document.getElementById(ids[ids.length-1]).classList.add('done');
+      clearInterval(tick);
+      setTimeout(()=>{
+        ov.classList.remove('on');
+        ids.forEach(id=>document.getElementById(id).classList.remove('done','running'));
+        callback&&callback();
+      },600);
+    }
+  },650);
+}
+
+/* ── CREATORS ── */
+function toggleCC(el){
+  const already=el.classList.contains('sel');
+  const count=document.querySelectorAll('.cc.sel').length;
+  if(!already&&count>=4){alert('You can select up to 4 creators.');return}
+  el.classList.toggle('sel');
+  document.getElementById('cc-err').style.display='none';
+}
+
+function launchCampaign(){
+  const selected=document.querySelectorAll('.cc.sel').length;
+  if(selected<2){document.getElementById('cc-err').style.display='block';return}
+
+  const ov=document.getElementById('ai-ov');
+  const title=document.getElementById('ai-title');
+  const msg=document.getElementById('ai-msg');
+  const prog=document.getElementById('ai-prog');
+  prog.style.display='none';
+  title.textContent='Launching campaign 🚀';
+  msg.textContent='Notifying creators and scheduling posts…';
+  ov.classList.add('on');
+  setTimeout(()=>{
+    msg.textContent='Setting up live monitoring dashboard…';
+    setTimeout(()=>{
+      ov.classList.remove('on');
+      prog.style.display='flex';
+      title.textContent='Running AI agents';
+      goTo('live');
+    },1400);
+  },1400);
+}
+
+/* ── CHIP HELPERS ── */
+function toggleChip(el){el.classList.toggle('sel')}
+function toggleChipSingle(el,groupId){
+  const parent=el.parentElement;
+  parent.querySelectorAll('.chip').forEach(c=>c.classList.remove('sel'));
+  el.classList.add('sel');
+}
+function togglePlat(el){el.classList.toggle('sel')}
+function selBudget(el){
+  document.querySelectorAll('.budget-pill').forEach(p=>p.classList.remove('sel'));
+  el.classList.add('sel');
+}
+</script>
+</body>
+</html>
